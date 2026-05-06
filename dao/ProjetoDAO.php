@@ -100,6 +100,13 @@ class ProjetoDAO
     public function alterarProjeto($id_projeto, $nome, $descricao, $id_tipo, $id_local, $id_status, $data_inicio, $data_fim)
     {
         try {
+            // Valida existência antes do UPDATE para não depender do rowCount,
+            // que retorna 0 quando os dados enviados são idênticos aos gravados.
+            $projetoExistente = $this->listarUm($id_projeto);
+            if (!$projetoExistente) {
+                throw new Exception("Nenhum projeto encontrado com o ID informado.");
+            }
+
             $pd = $this->pdo->prepare("UPDATE projeto SET 
             nome = :nome, 
             descricao = :descricao, 
@@ -125,10 +132,6 @@ class ProjetoDAO
 
             $pd->bindValue(':id_projeto', $id_projeto, PDO::PARAM_INT);
             $pd->execute();
-
-            if ($pd->rowCount() === 0) {
-                throw new Exception("Nenhum projeto encontrado com o ID informado.");
-            }
 
             return true;
         } catch (Exception $e) {
@@ -166,6 +169,51 @@ class ProjetoDAO
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             return [];
+        }
+    }
+
+    public function adicionarTipoProjeto($descricao)
+    {
+        try {
+            if (empty($descricao)) {
+                throw new Exception("Tipo não informado.");
+            }
+            $stmt = $this->pdo->prepare("INSERT INTO projeto_tipo (descricao) VALUES (:descricao)");
+            $stmt->bindValue(':descricao', $descricao);
+            $stmt->execute();
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("Erro ao adicionar tipo: " . $e->getMessage());
+        }
+    }
+
+    public function adicionarLocalProjeto($nome)
+    {
+        try {
+            if (empty($nome)) {
+                throw new Exception("Local não informado.");
+            }
+            $stmt = $this->pdo->prepare("INSERT INTO projeto_local (nome) VALUES (:nome)");
+            $stmt->bindValue(':nome', $nome);
+            $stmt->execute();
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("Erro ao adicionar local: " . $e->getMessage());
+        }
+    }
+
+    public function adicionarStatusProjeto($descricao)
+    {
+        try {
+            if (empty($descricao)) {
+                throw new Exception("Status não informado.");
+            }
+            $stmt = $this->pdo->prepare("INSERT INTO projeto_status (descricao) VALUES (:descricao)");
+            $stmt->bindValue(':descricao', $descricao);
+            $stmt->execute();
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("Erro ao adicionar status: " . $e->getMessage());
         }
     }
 }
